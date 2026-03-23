@@ -148,7 +148,11 @@ export default function AchievementsPage() {
         await supabase
           .from("achievements")
           .upsert({ user_id: user.id, achievement_key: a.key } as any);
-        setUnlocked((prev) => new Set([...prev, a.key]));
+        setUnlocked((prev) => {
+          const next = new Set(prev);
+          next.add(a.key);
+          return next;
+        });
       }
     });
   }, [expenses, user, loading]);
