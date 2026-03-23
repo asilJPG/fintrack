@@ -147,7 +147,7 @@ export default function AchievementsPage() {
       if (!unlocked.has(a.key) && a.check(data)) {
         await supabase
           .from("achievements")
-          .upsert({ user_id: user.id, achievement_key: a.key });
+          .upsert({ user_id: user.id, achievement_key: a.key } as any);
         setUnlocked((prev) => new Set([...prev, a.key]));
       }
     });
