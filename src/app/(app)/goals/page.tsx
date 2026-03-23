@@ -191,12 +191,9 @@ function GoalModal({
       user_id: userId,
     };
     if (goal) {
-      await supabase
-        .from("goals")
-        .update(payload as any)
-        .eq("id", goal.id);
+      await supabase.from<any>("goals").update(payload).eq("id", goal.id);
     } else {
-      await supabase.from("goals").insert(payload as any);
+      await supabase.from<any>("goals").insert(payload);
     }
     setSaving(false);
     onClose();
