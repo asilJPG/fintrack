@@ -1,6 +1,5 @@
 /**
  * TypeScript types mirroring the Supabase database schema.
- * Keep in sync with supabase-schema.sql
  */
 
 export interface Category {
@@ -55,16 +54,45 @@ export interface Profile {
   updated_at: string
 }
 
+export interface AchievementRow {
+  achievement_key: string
+}
+
 /** Supabase Database type map for createClient generic */
+export type Json = string | number | boolean | null | { [key: string]: Json } | Json[]
+
 export interface Database {
   public: {
     Tables: {
-      expenses: { Row: Expense; Insert: Omit<Expense,'id'|'created_at'>; Update: Partial<Expense> }
-      categories: { Row: Category; Insert: Omit<Category,'id'|'created_at'>; Update: Partial<Category> }
-      goals: { Row: Goal; Insert: Omit<Goal,'id'|'created_at'>; Update: Partial<Goal> }
-      achievements: { Row: Achievement; Insert: Omit<Achievement,'id'|'unlocked_at'>; Update: Partial<Achievement> }
-      profiles: { Row: Profile; Insert: Partial<Profile>; Update: Partial<Profile> }
+      expenses: {
+        Row: Expense
+        Insert: Omit<Expense, 'id' | 'created_at'>
+        Update: Partial<Omit<Expense, 'id'>>
+      }
+      categories: {
+        Row: Category
+        Insert: Omit<Category, 'id' | 'created_at'>
+        Update: Partial<Omit<Category, 'id'>>
+      }
+      goals: {
+        Row: Goal
+        Insert: Omit<Goal, 'id' | 'created_at'>
+        Update: Partial<Omit<Goal, 'id'>>
+      }
+      achievements: {
+        Row: Achievement
+        Insert: Omit<Achievement, 'id' | 'unlocked_at'>
+        Update: Partial<Omit<Achievement, 'id'>>
+      }
+      profiles: {
+        Row: Profile
+        Insert: Partial<Profile>
+        Update: Partial<Profile>
+      }
     }
+    Views: Record<string, never>
+    Functions: Record<string, never>
+    Enums: Record<string, never>
   }
 }
 
