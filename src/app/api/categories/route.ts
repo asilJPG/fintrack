@@ -1,43 +1,61 @@
-/**
- * GET /api/categories
- * Returns all categories for the given user_id.
- * Used by iPhone Shortcut integration.
- *
- * Auth: Bearer token (Supabase JWT) in Authorization header, OR
- *       ?api_key=<service-role-key> for simple shortcut usage.
- */
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase'
 
-export async function GET(req: NextRequest) {
-  // Allow CORS for Shortcut
-  const headers = {
-    'Access-Control-Allow-Origin': '*',
-    'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
-    'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-    'Content-Type': 'application/json',
-  }
+const CORS = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Methods': 'GET, OPTIONS',
+  'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+}
 
+// Категории только для расходов (без доходных)
+const EXPENSE_CATEGORY_NAMES = [
+  'Еда',
+  'Транспорт',
+  'Покупки',
+  'Развлечения',
+  'Подписки',
+  'Аренда',
+  'Здоровье',
+  'Кафе',
+  'Образование',
+  'Спорт',
+  'Другое',
+]
+
+export async function GET(req: NextRequest) {
   try {
-    const { data, error } = await supabaseAdmin
+    // Сначала пробуем из БД
+    const { data } = await supabaseAdmin
       .from('categories')
-      .select('id, name, icon, color')
-      .or('is_default.eq.true')
+      .select('name')
+      .eq('is_default', true)
       .order('name')
 
-    if (error) return NextResponse.json({ error: error.message }, { status: 500, headers })
-    return NextResponse.json({ categories: data }, { headers })
+    let names: string[]
+
+    if (data && data.length > 0) {
+      // Фильтруем — только расходные категории
+      names = (data as any[])
+        .map(c => c.name as string)
+        .filter(name => name !== 'Зарплата')
+    } else {
+      // Fallback — захардкоженный список
+      names = EXPENSE_CATEGORY_NAMES
+    }
+
+    return NextResponse.json(
+      { categories: names, count: names.length },
+      { headers: CORS }
+    )
   } catch (e) {
-    return NextResponse.json({ error: 'Server error' }, { status: 500, headers })
+    // Fallback при ошибке
+    return NextResponse.json(
+      { categories: EXPENSE_CATEGORY_NAMES, count: EXPENSE_CATEGORY_NAMES.length },
+      { headers: CORS }
+    )
   }
 }
 
 export async function OPTIONS() {
-  return new NextResponse(null, {
-    headers: {
-      'Access-Control-Allow-Origin': '*',
-      'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
-      'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-    },
-  })
+  return new NextResponse(null, { headers: CORS })
 }
