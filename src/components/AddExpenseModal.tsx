@@ -11,10 +11,12 @@ interface Props {
   open: boolean
   onClose: () => void
   editExpense?: Expense | null
+  defaultType?: 'expense' | 'income'
 }
 
 interface FormState {
   amount: string
+  displayAmount: string
   type: 'expense' | 'income'
   category: Category | null
   note: string
@@ -31,10 +33,18 @@ function nowTimeStr() {
   return `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`
 }
 
-function defaultForm(): FormState {
+/** Format number with spaces: 20000 → 20 000 */
+function formatAmountDisplay(val: string): string {
+  const digits = val.replace(/\D/g, '')
+  if (!digits) return ''
+  return parseInt(digits, 10).toLocaleString('ru-RU')
+}
+
+function defaultForm(type: 'expense' | 'income' = 'expense'): FormState {
   return {
     amount: '',
-    type: 'expense',
+    displayAmount: '',
+    type,
     category: null,
     note: '',
     date: todayStr(),
@@ -42,10 +52,10 @@ function defaultForm(): FormState {
   }
 }
 
-export default function AddExpenseModal({ open, onClose, editExpense }: Props) {
+export default function AddExpenseModal({ open, onClose, editExpense, defaultType = 'expense' }: Props) {
   const { addExpense, updateExpense } = useExpenses()
   const { categories } = useCategories()
-  const [form, setForm] = useState<FormState>(defaultForm())
+  const [form, setForm] = useState<FormState>(defaultForm(defaultType))
   const [quickInput, setQuickInput] = useState('')
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
@@ -55,8 +65,10 @@ export default function AddExpenseModal({ open, onClose, editExpense }: Props) {
     if (!open) return
     if (editExpense) {
       const cat = categories.find(c => c.name === editExpense.category_name) ?? null
+      const amountStr = String(editExpense.amount)
       setForm({
-        amount: String(editExpense.amount),
+        amount: amountStr,
+        displayAmount: formatAmountDisplay(amountStr),
         type: editExpense.type,
         category: cat,
         note: editExpense.note ?? '',
@@ -64,12 +76,22 @@ export default function AddExpenseModal({ open, onClose, editExpense }: Props) {
         time: (editExpense as any).time ?? nowTimeStr(),
       })
     } else {
-      setForm(defaultForm())
+      setForm(defaultForm(defaultType))
       setQuickInput('')
     }
     setError('')
     setTimeout(() => amountRef.current?.focus(), 100)
-  }, [open, editExpense]) // eslint-disable-line
+  }, [open, editExpense, defaultType]) // eslint-disable-line
+
+  /** Handle amount input — store raw digits, display with spaces */
+  const handleAmountChange = (val: string) => {
+    const digits = val.replace(/\D/g, '')
+    setForm(f => ({
+      ...f,
+      amount: digits,
+      displayAmount: formatAmountDisplay(digits),
+    }))
+  }
 
   const handleQuickParse = () => {
     const trimmed = quickInput.trim()
@@ -77,14 +99,21 @@ export default function AddExpenseModal({ open, onClose, editExpense }: Props) {
     const parsed = parseQuickAdd(trimmed)
     if (!parsed) { setError('Формат: сумма категория заметка'); return }
     const cat = findCategory(parsed.categoryHint)
-    setForm(f => ({ ...f, amount: String(parsed.amount), category: cat, note: parsed.note || f.note }))
+    setForm(f => ({
+      ...f,
+      amount: String(parsed.amount),
+      displayAmount: formatAmountDisplay(String(parsed.amount)),
+      category: cat,
+      note: parsed.note || f.note,
+    }))
     setQuickInput('')
     setError('')
     amountRef.current?.focus()
   }
 
   const handleSubmit = async () => {
-    if (!form.amount || isNaN(Number(form.amount)) || Number(form.amount) <= 0) {
+    const numAmount = parseFloat(form.amount)
+    if (!form.amount || isNaN(numAmount) || numAmount <= 0) {
       setError('Введите корректную сумму')
       return
     }
@@ -92,7 +121,7 @@ export default function AddExpenseModal({ open, onClose, editExpense }: Props) {
     setError('')
     const cat = form.category ?? findCategory('other')
     const payload = {
-      amount: parseFloat(form.amount),
+      amount: numAmount,
       type: form.type,
       category_id: cat.is_default ? null : cat.id,
       category_name: cat.name,
@@ -132,6 +161,7 @@ export default function AddExpenseModal({ open, onClose, editExpense }: Props) {
         </div>
 
         <div className="p-5 space-y-4 overflow-y-auto">
+          {/* Quick add */}
           {!editExpense && (
             <div>
               <label className="label flex items-center gap-1.5">
@@ -140,7 +170,7 @@ export default function AddExpenseModal({ open, onClose, editExpense }: Props) {
               <div className="flex gap-2">
                 <input
                   className="input flex-1 font-mono text-sm"
-                  placeholder="2500 еда обед в кафе"
+                  placeholder="25000 еда обед в кафе"
                   value={quickInput}
                   onChange={e => setQuickInput(e.target.value)}
                   onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); handleQuickParse() } }}
@@ -156,13 +186,16 @@ export default function AddExpenseModal({ open, onClose, editExpense }: Props) {
             </div>
           )}
 
+          {/* Type toggle */}
           <div>
             <label className="label">Тип операции</label>
             <div className="flex rounded-xl overflow-hidden border border-white/[0.08] p-0.5 bg-white/[0.03]">
               {(['expense', 'income'] as const).map(t => (
                 <button key={t} type="button" onClick={() => setForm(f => ({ ...f, type: t }))}
                   className={clsx('flex-1 py-2 text-sm font-semibold rounded-lg transition-all',
-                    form.type === t ? (t === 'expense' ? 'bg-red-500/20 text-red-400' : 'bg-green-500/20 text-green-400') : 'text-white/30 hover:text-white/60'
+                    form.type === t
+                      ? t === 'expense' ? 'bg-red-500/20 text-red-400' : 'bg-green-500/20 text-green-400'
+                      : 'text-white/30 hover:text-white/60'
                   )}>
                   {t === 'expense' ? '📤 Расход' : '📥 Доход'}
                 </button>
@@ -170,28 +203,52 @@ export default function AddExpenseModal({ open, onClose, editExpense }: Props) {
             </div>
           </div>
 
+          {/* Amount — formatted with spaces */}
           <div>
             <label className="label">Сумма</label>
-            <input ref={amountRef} className="input text-xl font-mono font-bold" type="number" step="1" min="0" placeholder="0"
-              value={form.amount} onChange={e => setForm(f => ({ ...f, amount: e.target.value }))}
-              onKeyDown={e => { if (e.key === 'Enter') handleSubmit() }} />
+            <div className="relative">
+              <input
+                ref={amountRef}
+                className="input text-2xl font-mono font-bold tracking-wider pr-16"
+                type="text"
+                inputMode="numeric"
+                placeholder="0"
+                value={form.displayAmount}
+                onChange={e => handleAmountChange(e.target.value)}
+                onKeyDown={e => { if (e.key === 'Enter') handleSubmit() }}
+              />
+              <span className="absolute right-4 top-1/2 -translate-y-1/2 text-sm text-white/30 font-medium">
+                сум
+              </span>
+            </div>
+            {form.amount && (
+              <p className="text-xs text-white/25 mt-1 font-mono">
+                = {parseInt(form.amount).toLocaleString('ru-RU')} сум
+              </p>
+            )}
           </div>
 
+          {/* Category */}
           <div>
             <label className="label">Категория</label>
             <div className="flex flex-wrap gap-1.5 max-h-36 overflow-y-auto pr-1">
               {displayCategories.map(cat => (
                 <button key={cat.id} type="button" onClick={() => setForm(f => ({ ...f, category: cat }))}
                   className={clsx('flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-xs font-medium border transition-all',
-                    form.category?.id === cat.id ? 'border-brand-500 bg-brand-500/20 text-brand-300' : 'border-white/[0.08] text-white/50 hover:border-white/20 hover:text-white hover:bg-white/[0.04]'
+                    form.category?.id === cat.id
+                      ? 'border-brand-500 bg-brand-500/20 text-brand-300'
+                      : 'border-white/[0.08] text-white/50 hover:border-white/20 hover:text-white hover:bg-white/[0.04]'
                   )}>
                   <span>{cat.icon}</span><span>{cat.name}</span>
                 </button>
               ))}
             </div>
-            {form.category && <p className="text-xs text-white/30 mt-1.5">Выбрано: {form.category.icon} {form.category.name}</p>}
+            {form.category && (
+              <p className="text-xs text-white/30 mt-1.5">Выбрано: {form.category.icon} {form.category.name}</p>
+            )}
           </div>
 
+          {/* Note */}
           <div>
             <label className="label">Заметка <span className="text-white/20 normal-case font-normal">(необязательно)</span></label>
             <input className="input" placeholder="Обед, такси до офиса, Netflix..."
@@ -199,6 +256,7 @@ export default function AddExpenseModal({ open, onClose, editExpense }: Props) {
               onKeyDown={e => { if (e.key === 'Enter') handleSubmit() }} />
           </div>
 
+          {/* Date + Time */}
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="label">Дата</label>
@@ -212,11 +270,15 @@ export default function AddExpenseModal({ open, onClose, editExpense }: Props) {
             </div>
           </div>
 
-          {error && <div className="text-red-400 text-sm bg-red-400/10 border border-red-400/20 rounded-xl px-4 py-2.5">{error}</div>}
+          {error && (
+            <div className="text-red-400 text-sm bg-red-400/10 border border-red-400/20 rounded-xl px-4 py-2.5">{error}</div>
+          )}
 
           <button
             className={clsx('w-full justify-center py-3 text-base font-semibold rounded-xl transition-all flex items-center gap-2',
-              form.type === 'income' ? 'bg-green-500/20 hover:bg-green-500/30 text-green-400 border border-green-500/30' : 'btn-primary'
+              form.type === 'income'
+                ? 'bg-green-500/20 hover:bg-green-500/30 text-green-400 border border-green-500/30'
+                : 'btn-primary'
             )}
             disabled={saving} onClick={handleSubmit}>
             {saving ? 'Сохраняем...' : editExpense ? '💾 Сохранить' : form.type === 'income' ? '📥 Добавить доход' : '📤 Добавить расход'}
