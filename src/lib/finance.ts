@@ -10,7 +10,7 @@ export const CURRENCY_SYMBOLS: Record<string, string> = {
   EUR: '€',
   RUB: '₽',
   KZT: '₸',
-  UZS: 'сум',
+  UZS: 'sum',
   GBP: '£',
 }
 
