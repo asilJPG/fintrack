@@ -1,10 +1,6 @@
-/**
- * Finance utility functions used throughout the app.
- */
 import type { Expense, DashboardStats, ChartDataPoint } from '@/types/database'
 import { startOfMonth, endOfMonth, isWithinInterval, parseISO, format, addMonths } from 'date-fns'
 
-/** Currency symbols */
 export const CURRENCY_SYMBOLS: Record<string, string> = {
   USD: '$',
   EUR: '€',
@@ -14,7 +10,6 @@ export const CURRENCY_SYMBOLS: Record<string, string> = {
   GBP: '£',
 }
 
-/** Format number as currency */
 export function formatCurrency(amount: number, currency = 'UZS'): string {
   const symbol = CURRENCY_SYMBOLS[currency] ?? currency
   if (currency === 'UZS') {
@@ -25,7 +20,6 @@ export function formatCurrency(amount: number, currency = 'UZS'): string {
   return `${symbol}${amount.toFixed(2)}`
 }
 
-/** Format compact - for stat cards */
 export function formatCompact(amount: number, currency = 'UZS'): string {
   const symbol = CURRENCY_SYMBOLS[currency] ?? currency
   if (currency === 'UZS') {
@@ -39,18 +33,16 @@ export function formatCompact(amount: number, currency = 'UZS'): string {
   return `${symbol}${amount.toFixed(2)}`
 }
 
-/** Format burn rate per second/minute/hour/day */
 export function formatBurn(amount: number, currency = 'UZS'): string {
   const symbol = CURRENCY_SYMBOLS[currency] ?? currency
   if (currency === 'UZS') {
     if (amount >= 1000) return `${Math.round(amount).toLocaleString('ru-RU')} ${symbol}`
     if (amount >= 1) return `${amount.toFixed(0)} ${symbol}`
-    return `${amount.toFixed(2)} ${symbol}`
+    return `${amount.toFixed(1)} ${symbol}`
   }
   return `${symbol}${amount.toFixed(4)}`
 }
 
-/** Calculate dashboard stats from a list of expenses */
 export function calcDashboardStats(expenses: Expense[], monthlyIncome: number): DashboardStats {
   const now = new Date()
   const monthStart = startOfMonth(now)
@@ -61,13 +53,8 @@ export function calcDashboardStats(expenses: Expense[], monthlyIncome: number): 
     return isWithinInterval(d, { start: monthStart, end: monthEnd })
   })
 
-  const monthlyExpenses = thisMonth
-    .filter(e => e.type === 'expense')
-    .reduce((s, e) => s + e.amount, 0)
-
-  const monthlyIncomeTx = thisMonth
-    .filter(e => e.type === 'income')
-    .reduce((s, e) => s + e.amount, 0)
+  const monthlyExpenses = thisMonth.filter(e => e.type === 'expense').reduce((s, e) => s + e.amount, 0)
+  const monthlyIncomeTx = thisMonth.filter(e => e.type === 'income').reduce((s, e) => s + e.amount, 0)
 
   const effectiveIncome = monthlyIncomeTx > 0 ? monthlyIncomeTx : monthlyIncome
   const monthlySavings = effectiveIncome - monthlyExpenses
@@ -95,23 +82,18 @@ export function calcDashboardStats(expenses: Expense[], monthlyIncome: number): 
   }
 }
 
-/** Group expenses by category for pie chart */
 export function groupByCategory(expenses: Expense[]): ChartDataPoint[] {
   const map: Record<string, number> = {}
   expenses.filter(e => e.type === 'expense').forEach(e => {
     const key = e.category_name || 'Другое'
     map[key] = (map[key] || 0) + e.amount
   })
-  return Object.entries(map)
-    .map(([name, value]) => ({ name, value }))
-    .sort((a, b) => b.value - a.value)
+  return Object.entries(map).map(([name, value]) => ({ name, value })).sort((a, b) => b.value - a.value)
 }
 
-/** Group expenses by day for the current month */
 export function groupByDay(expenses: Expense[]): { date: string; expenses: number; income: number }[] {
   const now = new Date()
   const days: Record<string, { expenses: number; income: number }> = {}
-
   expenses.forEach(e => {
     const d = parseISO(e.date)
     if (d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear()) {
@@ -121,11 +103,9 @@ export function groupByDay(expenses: Expense[]): { date: string; expenses: numbe
       else days[key].income += e.amount
     }
   })
-
   return Object.entries(days).map(([date, v]) => ({ date, ...v }))
 }
 
-/** Parse quick-add string: "25000 еда обед" → { amount, categoryHint, note } */
 export function parseQuickAdd(input: string): { amount: number; categoryHint: string; note: string } | null {
   const trimmed = input.trim()
   const match = trimmed.match(/^(\d+(?:[.,]\d+)?)\s*(.*)$/)
@@ -137,7 +117,6 @@ export function parseQuickAdd(input: string): { amount: number; categoryHint: st
   return { amount, categoryHint, note }
 }
 
-/** Calculate goal ETA */
 export function calcGoalETA(targetAmount: number, currentAmount: number, monthlyContribution: number): string {
   if (monthlyContribution <= 0) return 'Не задан взнос'
   const remaining = targetAmount - currentAmount
@@ -147,7 +126,6 @@ export function calcGoalETA(targetAmount: number, currentAmount: number, monthly
   return `${format(eta, 'MMM yyyy')} (${months} мес.)`
 }
 
-/** Category colors */
 export const CATEGORY_COLORS: Record<string, string> = {
   'Еда': '#ff9f43',
   'Транспорт': '#00b4d8',
