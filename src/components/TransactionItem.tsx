@@ -69,9 +69,6 @@ export default function TransactionItem({
         <p className="text-xs text-white/30 mt-0.5">
           {e.category_name} ·{" "}
           {format(parseISO(e.date), "d MMM yyyy", { locale: ru })}
-          {(e as any).time && (
-            <span className="ml-1 text-white/20">в {(e as any).time}</span>
-          )}
         </p>
       </div>
 
