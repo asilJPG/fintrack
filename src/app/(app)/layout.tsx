@@ -17,7 +17,7 @@ import clsx from 'clsx'
 const NAV = [
   { href: '/dashboard',      icon: LayoutDashboard, label: 'Дашборд' },
   { href: '/expenses',       icon: CreditCard,      label: 'Расходы' },
-  { href: '/statistics', icon: BarChart2, label: 'Статистика' },
+  { href: '/statistics',     icon: BarChart2,       label: 'Статистика' },
   { href: '/goals',          icon: Target,          label: 'Цели' },
   { href: '/ai',             icon: Brain,           label: 'AI Анализ',   badge: 'New' },
   { href: '/scanner',        icon: Scan,            label: 'Сканер чеков' },
