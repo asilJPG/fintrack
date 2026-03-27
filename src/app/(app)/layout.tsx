@@ -132,14 +132,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
             <Menu className="w-5 h-5" />
           </button>
           <h1 className="font-bold text-lg tracking-tight">{currentPage}</h1>
-          <div className="ml-auto flex items-center gap-2">
-            <Link href="/expenses" className="btn-ghost text-xs py-2 px-3 hidden sm:flex">
-              + Добавить расход
-            </Link>
-            <Link href="/expenses" className="btn-primary text-xs py-2 px-3">
-              Быстрый ввод
-            </Link>
-          </div>
+         
         </header>
 
         {/* Page content */}
