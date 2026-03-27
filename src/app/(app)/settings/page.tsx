@@ -8,6 +8,7 @@ import { useCategories } from '@/hooks/useCategories'
 import { supabase } from '@/lib/supabase'
 import { Plus, Save, Copy, Check, Trash2 } from 'lucide-react'
 import type { Profile } from '@/types/database'
+import ShortcutDownload from '@/components/ShortcutDownload'
 
 export default function SettingsPage() {
   const { user } = useAuth()
@@ -213,52 +214,9 @@ export default function SettingsPage() {
       </div>
 
       {/* iPhone Shortcut API */}
-      <div className="card p-6">
-        <h3 className="font-bold text-base mb-1">📱 iPhone Shortcut API</h3>
-        <p className="text-sm text-white/40 mb-4">
-          Добавляйте расходы тройным касанием задней панели iPhone
-        </p>
-
-        <div className="space-y-3">
-          <div>
-            <label className="label">Ваш User ID (для Shortcut)</label>
-            <div className="flex gap-2">
-              <input
-                className="input font-mono text-xs"
-                value={user?.id ?? ''}
-                readOnly
-              />
-              <button onClick={copyUserId} className="btn-ghost px-3 flex-shrink-0">
-                {copied
-                  ? <Check className="w-4 h-4 text-green-400" />
-                  : <Copy className="w-4 h-4" />
-                }
-              </button>
-            </div>
-          </div>
-
-          <div className="bg-[#111118] rounded-xl p-4 font-mono text-xs space-y-1.5 text-white/40">
-            <p className="text-white/20 font-sans text-[10px] uppercase tracking-wider mb-2">API Endpoints</p>
-            <p><span className="text-green-400">GET</span>  /api/categories</p>
-            <p><span className="text-blue-400">POST</span> /api/add-expense</p>
-            <p className="text-white/20 pt-1 font-sans">
-              Body: {'{ amount, category, note, user_id }'}
-            </p>
-          </div>
-
-          <div className="bg-brand-500/10 border border-brand-500/20 rounded-xl p-4">
-            <p className="font-semibold text-brand-300 text-sm mb-2">Настройка Shortcut</p>
-            <ol className="list-decimal list-inside space-y-1 text-xs text-white/50">
-              <li>Открыть приложение «Быстрые команды»</li>
-              <li>Новая команда → Веб-запрос GET /api/categories</li>
-              <li>Меню выбора категории из JSON ответа</li>
-              <li>Запросить ввод числа (сумма)</li>
-              <li>Веб-запрос POST /api/add-expense с JSON</li>
-              <li>Настройки → Универсальный доступ → Касание задней панели</li>
-            </ol>
-          </div>
-        </div>
-      </div>
+    
+    <ShortcutDownload userId={user?.id ?? ''} />
+  
 
       {/* Account info */}
       <div className="card p-6">
