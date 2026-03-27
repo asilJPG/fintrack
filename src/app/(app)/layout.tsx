@@ -10,7 +10,7 @@ import { useAuth } from '@/hooks/useAuth'
 import {
   LayoutDashboard, CreditCard, Target, Brain,
   Settings, LogOut, TrendingUp, Menu, X,
-  Bell, Scan, Trophy, ChevronRight
+  Bell, Scan, Trophy, ChevronRight,BarChart2
 } from 'lucide-react'
 import clsx from 'clsx'
 
@@ -23,6 +23,7 @@ const NAV = [
   { href: '/achievements',   icon: Trophy,          label: 'Достижения' },
   { href: '/notifications',  icon: Bell,            label: 'Уведомления' },
   { href: '/settings',       icon: Settings,        label: 'Настройки' },
+  { href: '/statistics', icon: BarChart2, label: 'Статистика' },
 ]
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
