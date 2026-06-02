@@ -58,14 +58,9 @@ export function formatBurn(amount: number, currency = "UZS"): string {
   return `${symbol}${amount.toFixed(4)}`;
 }
 
-/**
- * Считает статистику ТОЛЬКО на основе реальных транзакций.
- * Поле monthlyIncome из настроек НЕ используется для расчёта сбережений.
- * Сбережения = доходы - расходы за текущий месяц (только реальные транзакции).
- */
 export function calcDashboardStats(
   expenses: Expense[],
-  _monthlyIncomeSetting: number = 0,
+  _monthlyIncomeSetting: number = 0
 ): DashboardStats {
   const now = new Date();
   const monthStart = startOfMonth(now);
@@ -76,22 +71,16 @@ export function calcDashboardStats(
     return isWithinInterval(d, { start: monthStart, end: monthEnd });
   });
 
-  // Расходы за месяц (только реальные транзакции типа expense)
   const monthlyExpenses = thisMonth
     .filter((e) => e.type === "expense")
     .reduce((s, e) => s + e.amount, 0);
-
-  // Доходы за месяц (только реальные транзакции типа income)
   const monthlyIncome = thisMonth
     .filter((e) => e.type === "income")
     .reduce((s, e) => s + e.amount, 0);
-
-  // Сбережения = реальные доходы - реальные расходы
   const monthlySavings = monthlyIncome - monthlyExpenses;
   const savingsRate =
     monthlyIncome > 0 ? (monthlySavings / monthlyIncome) * 100 : 0;
 
-  // Баланс = все доходы за всё время - все расходы за всё время
   const allIncome = expenses
     .filter((e) => e.type === "income")
     .reduce((s, e) => s + e.amount, 0);
@@ -100,7 +89,6 @@ export function calcDashboardStats(
     .reduce((s, e) => s + e.amount, 0);
   const totalBalance = allIncome - allExpenses;
 
-  // Сжигание считается от реальных расходов
   const burnPerSecond = monthlyExpenses / 2_592_000;
   const burnPerMinute = burnPerSecond * 60;
   const burnPerHour = burnPerSecond * 3600;
@@ -133,7 +121,7 @@ export function groupByCategory(expenses: Expense[]): ChartDataPoint[] {
 }
 
 export function groupByDay(
-  expenses: Expense[],
+  expenses: Expense[]
 ): { date: string; expenses: number; income: number }[] {
   const now = new Date();
   const days: Record<string, { expenses: number; income: number }> = {};
@@ -153,7 +141,7 @@ export function groupByDay(
 }
 
 export function parseQuickAdd(
-  input: string,
+  input: string
 ): { amount: number; categoryHint: string; note: string } | null {
   const trimmed = input.trim();
   const match = trimmed.match(/^(\d+(?:[.,]\d+)?)\s*(.*)$/);
@@ -168,7 +156,7 @@ export function parseQuickAdd(
 export function calcGoalETA(
   targetAmount: number,
   currentAmount: number,
-  monthlyContribution: number,
+  monthlyContribution: number
 ): string {
   if (monthlyContribution <= 0) return "Не задан взнос";
   const remaining = targetAmount - currentAmount;
@@ -186,10 +174,8 @@ export const CATEGORY_COLORS: Record<string, string> = {
   Подписки: "#4cc9f0",
   Аренда: "#6c63ff",
   Здоровье: "#00d68f",
-  Зарплата: "#22c55e",
-  Кафе: "#c77dff",
-  Образование: "#f4a261",
-  Спорт: "#2ec4b6",
+  Lokmaco: "#e76f51",
+  Офис: "#457b9d",
   Другое: "#888899",
 };
 
